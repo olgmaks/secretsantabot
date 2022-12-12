@@ -1,13 +1,12 @@
-FROM adoptopenjdk/openjdk11:alpine-jre
+FROM maven:3.6.0-jdk-11-slim AS build
+COPY src /home/app/src
+COPY pom.xml /home/app
+RUN mvn -f /home/app/pom.xml clean package
 
-# Refer to Maven build -> finalName
-ARG JAR_FILE=target/botapp.jar
-
-# cd /opt/app
-WORKDIR /opt/app
-
-# cp target/spring-boot-web.jar /opt/app/app.jar
-COPY ${JAR_FILE} app.jar
-
-# java -jar /opt/app/app.jar
-ENTRYPOINT ["java","-jar","app.jar"]
+#
+# Package stage
+#
+FROM openjdk:11
+COPY --from=build /home/app/target/botapp.jar /usr/local/lib/app.jar
+EXPOSE 8080
+ENTRYPOINT ["java","-jar","/usr/local/lib/app.jar"]
